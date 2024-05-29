@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Set default values
+numfiles=${1:-10}
+writestr=${2:-"AELD_IS_FUN"}
+
+# Create the directory
+mkdir -p /tmp/aeld-data
+
+# Read username from conf/username.txt
+username=$(cat conf/username.txt)
+
+# Loop to create numfiles files
+for ((i=1; i<=numfiles; i++)); do
+  ./writer.sh "/tmp/aeld-data/${username}${i}.txt" "$writestr"
+done
+
+# Run finder.sh script
+output=$(./finder.sh /tmp/aeld-data "$writestr")
+
+# Expected output
+expected_output="The number of files are $numfiles and the number of matching lines are $numfiles"
+
+# Compare output and print result
+if [[ "$output" == "$expected_output" ]]; then
+  echo "success"
+else
+  echo "error"
+fi
