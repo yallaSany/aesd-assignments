@@ -1,14 +1,10 @@
-#if the cross_compile environment variable is not set in the system, native will be used instead
-CC := $(CROSS_COMPILE)gcc
-LD := $(CROSS_COMPILE)ld
+CROSS_COMPILE=
 
-CFLAGS = -Wall -g
-
-writer: writer.o
-	$(CC) -o $@ $^
-
-%.o: %.c
-	$(CC) -c $(CFLAGS) -o $@ $<
-
+build:
+	$(CROSS_COMPILE)gcc -g -Wall -c -o writer.o writer.c
+	$(CROSS_COMPILE)gcc -g -Wall -I/ writer.o -o writer
+all:
+	$(CC) -g -Wall -c -o writer.o writer.c
+	$(CC) -g -Wall -I/ writer.o -o writer
 clean:
-	rm -f writer $(wildcard *.o)
+	rm -f *.o writer *.elf *.map
