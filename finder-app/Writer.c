@@ -1,50 +1,49 @@
-#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <libgen.h>
+#include <fcntl.h>
 #include <syslog.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
+#include <stdio.h>
+
+void openlog(const char *ident, int option, int facility);
+void syslog(int priority, const char *format, ...);
+void closelog(void);
+
+const char identity[] = "Writer";
 
 int main(int argc, char *argv[])
 {
-    /* variable to store errno */
-    int err = 0;
-        
-    /* open a system logging */
-    openlog(NULL, 0, LOG_USER);
+    openlog(identity, 0,LOG_USER);
 
-    syslog(LOG_DEBUG, "Writing %s to %s", argv[2], argv[1]);
-
-    /* check number of input parameters first */
-    if (argc < 3){
-        err = errno;
-        syslog(LOG_ERR, "Invalid number of arguments %s", strerror(err));
+    if (argc < 2)
+    {
+        syslog(LOG_ERR, "Not enough parameters");
         return 1;
     }
-    else{
-        syslog(LOG_DEBUG, "Correct number of input argumuents: %d", argc - 1);
+
+    char* file_and_path = strdup(argv[1]);
+    char* file = basename(file_and_path);
+
+    syslog(LOG_DEBUG, "Writing %s to file %s", argv[2], file);
+
+    int file_desc =  open(argv[1], O_RDWR | O_CREAT, S_IRWXU);
+
+    if (file_desc == -1)
+    {
+        syslog(LOG_ERR, "The file could does not exist or could not be created");
+        return 1;
     }
 
-    /* save input file name and text into variables */
-    char *file_path = argv[1];
-    char *txt_to_write = argv[2];
+    ssize_t bytes_written = write(file_desc, argv[2], strlen(argv[2]));
 
-    FILE *file = fopen(file_path, "w");
-    /* check for errors in opening the file */
-    if (file == NULL) {
-        err = errno;
-        syslog(LOG_ERR, "Error opening file: %s", strerror(err));
-        return err;
-    } else {
-        /* write to file */
-        size_t written = fprintf(file, "%s\n", txt_to_write);
-        /* check for errors writing to the file */
-        if (written != strlen(txt_to_write)+1) {
-            err = errno;
-            syslog(LOG_ERR, "Error writing to file: %s", strerror(err));
-            return err;
-        } else {
-            syslog(LOG_DEBUG, "Successfully wrote to file: %s", file_path);
-            fclose(file);
-            return 0;
-                }
-            }
+    if (bytes_written == -1)
+    {
+        syslog(LOG_ERR, "The string could not be written to the file");
+        return 1;
+    }
+
+    return 0;
 }
