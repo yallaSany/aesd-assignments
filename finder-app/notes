@@ -1,0 +1,7 @@
+aarch64-none-linux-gnu-gcc -print-sysroot
+    To findout if it's part of the path.
+
+export PATH=$PATH:/usr/local/arm-cross-compiler/install/gcc-arm-10.2.2020.11-86_64-aarch64-none-linux-gnu/bin
+    To add as part of the path
+
+$PWD to find the current path. 
