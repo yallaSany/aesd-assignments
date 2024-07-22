@@ -1,47 +1,49 @@
+#include <stdio.h>
+#include <errno.h>
+#include <syslog.h>
+#include <string.h>
+// File includes
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <libgen.h>
 #include <fcntl.h>
-#include <syslog.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <string.h>
-#include <stdio.h>
 
-void openlog(const char *ident, int option, int facility);
-void syslog(int priority, const char *format, ...);
-void closelog(void);
+int main(int argc, char **argv) {
 
-const char identity[] = "Writer";
+    openlog(NULL, LOG_PID, LOG_USER);
 
-int main(int argc, char *argv[])
-{
-    openlog(identity, 0,LOG_USER);
-
-    if (argc < 2)
-    {
-        syslog(LOG_ERR, "Not enough parameters");
+    if (argc != 3) {
+        syslog(LOG_ERR, "Invalid number of arguments. Expected 2, received: %d", argc - 1);
         return 1;
     }
 
-    char* file_and_path = strdup(argv[1]);
-    char* file = basename(file_and_path);
+    const char *filename = argv[1];
+    const char *writestr = argv[2];
 
-    syslog(LOG_DEBUG, "Writing %s to file %s", argv[2], file);
+    //syslog(LOG_DEBUG, "writestr is: %s", writestr);
 
-    int file_desc =  open(argv[1], O_RDWR | O_CREAT, S_IRWXU);
-
-    if (file_desc == -1)
-    {
-        syslog(LOG_ERR, "The file could does not exist or could not be created");
+    int fd;
+    fd = creat(filename, 0644);
+    if (fd == -1) {
+        syslog(LOG_ERR, "Failed to open file for writing: %s. Error: %m.", filename);
         return 1;
     }
 
-    ssize_t bytes_written = write(file_desc, argv[2], strlen(argv[2]));
+    syslog(LOG_DEBUG, "Writing %s to %s", writestr, filename);
+    
+    ssize_t nr;
+    size_t count = strlen(writestr);
 
-    if (bytes_written == -1)
-    {
-        syslog(LOG_ERR, "The string could not be written to the file");
+    nr = write(fd, writestr, count);
+    if (nr == -1) {
+        syslog(LOG_ERR, "Could not write to file: %m.");
+        return 1;
+    } else if (nr != count) {
+        syslog(LOG_ERR, "Incomplete file: %zd of %zd bytes written.", nr, count);
+    }
+
+    if (close(fd) == 1) {
+        syslog(LOG_ERR, "Error closing file  \"%s\": %m.", filename);
         return 1;
     }
 
