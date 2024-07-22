@@ -1,19 +1,22 @@
 #!/bin/bash
+: '
+    Accepts the following arguments: the first argument is a full path to a file (including filename) on the filesystem, referred to below as writefile; the second argument is a text string which will be written within this file, referred to below as writestr
 
-file="$1"
-str="$2"
-dir=$PWD
+    Exits with value 1 error and print statements if any of the arguments above were not specified
 
-if [[ -z "$str" ]] || [[ -z "$file" ]]
-then
-        echo "Missing parameter"
-        exit 1
+    Creates a new file with name and path writefile with content writestr, overwriting any existing file and creating the path if it doesn’t exist. Exits with value 1 and error print statement if the file could not be created.
+'
+
+
+if ! [[ $# -eq 2 ]]; then
+    echo "usage: $0 filename string"
+    exit 1
 fi
 
-cd /
+WRITEFILE=$1
+WRITESTR=$2
+WRITEDIR=$(dirname ${WRITEFILE})
 
-dirname $1 | xargs  mkdir -p
+mkdir -p ${WRITEDIR} || exit 1
 
-echo $str>$file
-
-cd $dir
+echo ${WRITESTR} > ${WRITEFILE} || exit 1
