@@ -1,22 +1,31 @@
 #!/bin/sh
 
-dir=$1
-str=$2
+: '
+Accepts the following runtime arguments: the first argument is a path to a directory on the filesystem, referred to below as filesdir; the second argument is a text string which will be searched within these files, referred to below as searchstr
 
-if [[ -z "$str" ]] || [[ -z "$dir" ]]
-then
-	echo "Missing parameter"
-	exit 1
+- Exits with return value 1 error and print statements if any of the parameters above were not specified
+
+- Exits with return value 1 error and print statements if filesdir does not represent a directory on the filesystem
+
+- Prints a message "The number of files are X and the number of matching lines are Y" where X is the number of files in the directory and all subdirectories and Y is the number of matching lines found in respective files, where a matching line refers to a line which contains searchstr (and may also contain additional content).
+'
+
+if ! [ $# -eq 2 ]; then
+    echo "usage: $0 path text"
+    exit 1
 fi
 
-if [[ ! -d "$dir" ]]
-then
-	echo "Directory does not exist"
-	exit 1
+FILESDIR=$1
+SEARCHSTR=$2
+
+if ! [ -d "${FILESDIR}" ]; then
+    echo "Not a directory: ${FILESDIR}"
+    exit 1
 fi
 
-var1=$(grep -r -o "$str*" "$dir" | wc -l)
-var2=$(grep -r -l "$str*" "$dir" | wc -l)
+FILECNT=$(find "${FILESDIR}" -type f | wc -l)
+MATCHCNT=$(grep -rc "${SEARCHSTR}" "${FILESDIR}" | awk -F: '{s+=$2} END {print s}')
 
+echo "The number of files are ${FILECNT} and the number of matching lines are ${MATCHCNT}."
 
-echo "The number of files are ${var2} and the number of matching lines are ${var1}"
+exit 0
